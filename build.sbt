@@ -17,6 +17,7 @@ lazy val root = (project in file("."))
       "com.typesafe.akka" %% "akka-stream" % AkkaVersion,
       "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
       "com.typesafe" % "config" % "1.4.0",
+      "com.influxdb" % "influxdb-client-scala" % "1.12.0"
     ),
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",

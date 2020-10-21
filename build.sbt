@@ -8,6 +8,7 @@ ThisBuild / organizationName := "dodona"
 val AkkaVersion = "2.6.9"
 val AkkaHttpVersion = "10.2.0"
 val CirceVersion = "0.12.3"
+val SlickVersion = "3.3.3"
 
 lazy val root = (project in file("."))
   .settings(
@@ -17,7 +18,11 @@ lazy val root = (project in file("."))
       "com.typesafe.akka" %% "akka-stream" % AkkaVersion,
       "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
       "com.typesafe" % "config" % "1.4.0",
-      "com.influxdb" % "influxdb-client-scala" % "1.12.0"
+      "com.influxdb" % "influxdb-client-scala" % "1.12.0",
+      "com.typesafe.slick" %% "slick" % SlickVersion,
+      "org.slf4j" % "slf4j-nop" % "1.6.4",
+      "com.typesafe.slick" %% "slick-hikaricp" % SlickVersion,
+      "org.xerial" % "sqlite-jdbc" % "3.32.3.2"
     ),
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",

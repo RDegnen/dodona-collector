@@ -17,25 +17,19 @@ import java.math.MathContext
 import scala.math.BigDecimal.RoundingMode
 import java.time.ZonedDateTime
 import java.time.ZoneId
+import collector.lib.InfluxClient
+import slick.lifted.TableQuery
+import collector.lib.db.schema.Candlesticks
+import slick.driver.SQLiteDriver.api._
+import collector.lib.db.DB
 
 object Collector extends App {
   implicit val system = ActorSystem()
   implicit val executionContext = system.dispatcher
-
-  val token =
-    "v1amvSM05TBVThLFWVgp0VmVlupdHM82fz459Smzbhh9TXwufu7QFQES1xgCi6FMEkh_3R75Ut4uA_Nzxq_5YQ=="
-  val org = "dodona"
-  val bucket = "crypto"
   val pair = "BTCUSD"
   val interval = "15m"
 
-  val influxClient = InfluxDBClientFactory.create(
-    "http://localhost:8086",
-    token.toCharArray,
-    org,
-    bucket
-  )
-  val writeApi = influxClient.getWriteApi()
+  val influxClinet = InfluxClient()
   val httpClient = new HttpClient()
   val request = httpClient.request[List[BinanceCandlestick]](
     HttpMethods.GET,
@@ -45,20 +39,19 @@ object Collector extends App {
 
   request.onComplete {
     case Success(value) => {
-      value.foreach(writeCandlestickToInflux)
-      influxClient.close()
+      val candles = TableQuery[Candlesticks]
+      var candlesSeq: Seq[(Int, String, String, BigDecimal, BigDecimal, BigDecimal, BigDecimal, BigDecimal, Long, Long)] = Seq.empty
+      value.foreach(bc => {
+        val tuple = (0, pair, interval, bc.open, bc.high, bc.low, bc.close, bc.volume, bc.openTime, bc.closeTime)
+        candlesSeq :+= tuple
+      })
+      val insertAction = candles ++= candlesSeq
+      DB.insert(insertAction)(executionContext)
+      DB.close()
       system.terminate()
     }
     case Failure(exception) => {
       println(exception)
     }
-  }
-
-  def writeCandlestickToInflux(candle: BinanceCandlestick): Unit = {
-    println("Writing", candle)
-    writeApi.writeRecord(
-      WritePrecision.MS,
-      s"candlestick_interval,pair=$pair,interval=$interval open=${candle.open},high=${candle.high},low=${candle.low},close=${candle.close},volume=${candle.volume} ${candle.closeTime}"
-    )
   }
 }
